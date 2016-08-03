@@ -2,16 +2,24 @@ package com.example.gaih.day08_baidumusic;
 
 import android.app.Service;
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.Log;
+
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created by gaih on 2016/7/14.
  */
 
 public class MusicService extends Service {
+    private MediaPlayer player;
 
     @Nullable
     @Override
@@ -21,6 +29,8 @@ public class MusicService extends Service {
 
     @Override
     public void onCreate() {
+        player = new MediaPlayer();
+
         super.onCreate();
     }
 
@@ -28,18 +38,53 @@ public class MusicService extends Service {
     public void onDestroy() {
         super.onDestroy();
     }
-    public void playMusic(){
-        Log.d("music:","播放");
-        //TODO 多媒体功能完善
-    }
-    public void pauseMusic(){
-        Log.d("music:","暂停");
-    }
-    public void replayMusic(){
-        Log.d("music:","继续播放");
+
+
+    public void seekToPosition(int position){
+        player.seekTo(position);
     }
 
-    private class MyBinder extends Binder implements Iservice{
+
+    public void playMusic() {
+        try {
+            player.reset();
+            player.setDataSource("/mnt/sdcard/李志.mp3");
+            player.prepare();
+            player.start();
+            updateSeekBar();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void updateSeekBar() {
+        final int duration = player.getDuration();
+        Timer timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                int currentPosition = player.getCurrentPosition();
+                Message msg = Message.obtain();
+                Bundle bundle = new Bundle();
+                bundle.putInt("duration",duration);
+                bundle.putInt("currentPosition",currentPosition);
+                msg.setData(bundle);
+                MainActivity.handler.sendMessage(msg);
+            }
+        };
+        timer.schedule(task,1000,1000);
+
+    }
+
+    public void pauseMusic() {
+        player.pause();
+    }
+
+    public void replayMusic() {
+        player.start();
+    }
+
+    private class MyBinder extends Binder implements Iservice {
         @Override
         public void callpauseMusic() {
             pauseMusic();
@@ -53,6 +98,11 @@ public class MusicService extends Service {
         @Override
         public void callreplayMusic() {
             replayMusic();
+        }
+
+        @Override
+        public void callSeekToPosition(int position) {
+            seekToPosition(position);
         }
     }
 }
