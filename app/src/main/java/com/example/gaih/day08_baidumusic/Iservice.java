@@ -8,6 +8,8 @@ public interface Iservice {
     public void callplayMusic();
     public void callpauseMusic();
     public void callreplayMusic();
+    public void callSeekToPosition(int position);
 
 
-}
+
+    }
